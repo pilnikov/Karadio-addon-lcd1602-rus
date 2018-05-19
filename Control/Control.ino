@@ -66,7 +66,7 @@ void setup()
 
   //------------------------------------------------------  Запускаем I2C и проверяем наличие клиентов
 
-  DBG_OUT_PORT.println("\n i2c scan");
+  DBG_OUT_PORT.printf("i2c scan");
   ram_data = fsys.i2c_scan(conf_data);
 
 
@@ -75,6 +75,7 @@ void setup()
   WiFi.mode( WIFI_OFF );
 
   start_wifi();
+
 
   //------------------------------------------------------ Подключаем OTA, SSDP и MDNS
   nsys.OTA_init(conf_data.ap_ssid, conf_data.ap_pass);
@@ -88,14 +89,17 @@ void setup()
 
   //------------------------------------------------------ Запускаем парсер
   parse();
+
 }
 
 
 void loop()
 {
   irq_set();
-  lcd.setCursor(0, 0); // первая строка
-  lcd.print(sta);
+//  lcd.setCursor(0, 0); // первая строка
+//  lcd.print(sta);
+  lcd_mov_str( sta, 0 , 290);
+
   lcd_mov_str( stl, 1, 290);
   if (cur_sym_pos[1] == 0) parse();
   enc_loop();

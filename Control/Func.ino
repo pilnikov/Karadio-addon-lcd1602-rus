@@ -108,7 +108,7 @@ void fs_setup()
   }
 }
 
-void wifi_conn(byte par, byte sta)
+void wifi_conn( byte par, byte sta, byte disp)
 {
   if (par < 3)
   {
@@ -137,17 +137,17 @@ void wifi_conn(byte par, byte sta)
     lcd.setCursor(0, 0);
     lcd.print( "IP: ");
     lcd.print(IP_Addr[3]);
-    sta_msg(0, 1, true, 2000);
+    sta_msg(disp, 0, 1, true, 2000);
   }
 
   if (par == 6)
   {
     lcd.clear();
-    sta_msg(0, 1, false, 2000);
+    sta_msg(disp, 0, 1, false, 2000);
   }
 }
 
-void sta_msg(uint8_t _row, uint8_t _colum, bool sta, uint16_t _delay)
+void sta_msg(byte disp, uint8_t _row, uint8_t _colum, bool sta, uint16_t _delay)
 {
   lcd.setCursor(_row, _colum);
   if (sta) lcd.print(fsys.lcd_rus("  Успешно!  "));

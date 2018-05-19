@@ -2,11 +2,11 @@
 void irq_set()
 {
   //------------------------------------------------------ interrupts
-
+ 
   uint8_t irq = 10;
   if (millis() - irq_end[1] > 3600000L)  irq = 1;
   else if (millis() - irq_end[2] > 1800000L)  irq = 2;
-  else if (millis() - irq_end[3] >   60000L)  irq = 3;
+  else if (millis() - irq_end[3] > conf_data.period * 60000L)  irq = 3;
   else if (millis() - irq_end[4] >   55000L)  irq = 4;
   else if (millis() - irq_end[6] >      500)  irq = 6;
   else if (millis() - irq_end[7] >      200)  irq = 7;
@@ -81,6 +81,12 @@ void firq7()
 
 void firq8()
 {
+  if (ram_data.type_disp == 1 && disp_on)
+  {
+    //String str = lcd_mov_str(st1);
+//    lcd.setCursor(0, 0);
+//    lcd.print (str);
+  }
 }
 
 void firq9()

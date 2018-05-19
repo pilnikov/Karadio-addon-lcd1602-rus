@@ -1,10 +1,12 @@
+#if defined(ESP8266)
+
 // ---------------------------------------------------------------------- setup
 void web_setup()
 {
-  server.on("/set_wifi",  handleSetWiFi);
+  server.on("/setting",   handleSetting);
   server.on("/exit",      handleExit);
   server.on("/jact",      handlejAct);
-  server.on("/jwifi",     handlejWiFi);
+  server.on("/jset",      handlejSet);
 
 
   //-------------------------------------------------------------- for SPIFFS
@@ -66,7 +68,7 @@ String cur_time_str()
 }
 
 //-------------------------------------------------------------- handlejWiFi
-void handlejWiFi()
+void handlejSet()
 {
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
@@ -76,6 +78,7 @@ void handlejWiFi()
   json ["staid"]  = conf_data.sta_ssid;
   json ["stapas"] = conf_data.sta_pass;
   json ["srvr"] = conf_data.radio_addr;
+  json ["dtyp"] = conf_data.type_disp;;
 
   String st = String();
   json.printTo(st);
@@ -85,14 +88,15 @@ void handlejWiFi()
 }
 
 //-------------------------------------------------------------- handleSetWiFi
-void handleSetWiFi()
+void handleSetting()
 {
-  //url='/set_wifi?as=' + as + '&ap=' + ap + '&ss=' + ss +'&sp=' + sp + '&rd=' + rd;
+  //url='/setting?as=' + as + '&ap=' + ap + '&ss=' + ss +'&sp=' + sp + '&rd=' + rd + '&dt=' + dt;
   strcpy(conf_data.ap_ssid, server.arg("as").c_str());
   strcpy(conf_data.ap_pass, server.arg("ap").c_str());
   strcpy(conf_data.sta_ssid, server.arg("ss").c_str());
   strcpy(conf_data.sta_pass, server.arg("sp").c_str());
   strcpy(conf_data.radio_addr, server.arg("rd").c_str());
+  conf_data.type_disp = server.arg("dt").toInt();
 
   saveConfig(conf_data);
   server.send(200, "text/html", "OK!");
@@ -247,3 +251,4 @@ String getContentType(String filename)
   return "text/plain";
 }
 
+# endif

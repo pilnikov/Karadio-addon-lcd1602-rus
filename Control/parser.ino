@@ -38,13 +38,22 @@ void parser1(String inStr)
         else if (nStr == "##CLI.PLAYING#")  vInd =  7;
 
         //      DBG_OUT_PORT.print("vInd..."); DBG_OUT_PORT.println(vInd);
-        if (vInd > 0) DBG_OUT_PORT.print(' ');
+        //     if (vInd > 0) DBG_OUT_PORT.print(' ');
+
+        vStr.trim();
 
         switch (vInd)
         {
           case 1:
-            //          prog[i].tod = vStr.toInt();
-            //          DBG_OUT_PORT.print(prog[i].tod);
+            char lstr[25]; //объявляем буфер в 30 символов под эту самую дату и время
+            tmElements_t dt;
+            vStr.toCharArray(lstr, 25) ; //копируем дату и время в буфер
+            breakTime(now(), dt); //Записываем в структуру dt (содержащую элементы час минута секунда год) текущее время в контроллере (в дурине)
+            int year, month, day, hour, minute, second; //объявляем переменные под год месяц день недели и.т.д
+            sscanf(lstr, "%04d-%02d-%02dT%02d%02d%02d", &(year), &(month), &(day), &(hour), &(minute), &(second)); //переносим (разбираем) строчку с датой на отдельные кусочки (день месяц год и.т.д)
+            dt.Year = year - 1970; dt.Month = month; dt.Day = day; //заменяем кусочки структуры dt значениями из нашей принятой и разобранной строки с датой и временем
+            dt.Hour = hour; dt.Minute = minute; dt.Second = second;
+            setTime(makeTime(dt)); //записываем в timestamp(штамп/оттиск времени в формате UNIX time (количество секунд с 1970 года) значение времени сформированное в структуре dt
             break;
           case 2:
             break;

@@ -1,5 +1,4 @@
 /********************************************************** Config
-
 struct conf_data_t
  {
   char      sta_ssid[33];
@@ -8,7 +7,7 @@ struct conf_data_t
   char      ap_pass[17];
   char      radio_addr[17];
   char      test[3];
- } conf_data;
+ };
 */
 
 
@@ -31,12 +30,28 @@ struct conf_data_t
 
 #include <ArduinoOTA.h>
 //#include <Ticker.h>
-#include <Udt.h>
 #include <hw.h>
 #include <Netwf.h>
 #include <FS.h>
 #endif
 
+#if defined(ESP32)
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiClient.h>
+#include <HTTPClient.h>
+#include <SPIFFS.h>
+//#include <ESPAsyncTCP.h>
+//#include <WebServer.h>
+//#include <HTTPUpdateServer.h>
+//#include <IRremote.h>
+
+#include <ArduinoOTA.h>
+//#include <Ticker.h>
+//#include <hw.h>
+#include <Netwf.h>
+#include <FS.h>
+#endif
 
 #include <ArduinoJson.h>
 #include <TimeLib.h>
@@ -59,6 +74,13 @@ udp_cons print_console_udp;
 #define DBG_OUT_PORT Serial
 #endif
 
+
+// ----------------------------------- Typedef
+#include <Udt.h>
+
+sr_data_t sr_data;
+conf_data_t conf_data;
+ram_data_t ram_data;
 
 // ----------------------------------- Include
 #include "web.h"
@@ -107,10 +129,10 @@ unsigned long serv_ms = 60000;
 static const char* name_week[] = {"", "ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"};
 
 // ---------------------------------------------------- WiFi Default
-static const char  ap_ssid_def[] PROGMEM = "WiFi_Clock";
-static const char  ap_pass_def[] PROGMEM = "";
+static const char  ap_ssid_def[] PROGMEM = "Radio_Pult";
+static const char  ap_pass_def[] PROGMEM = "12345678";
 static const char sta_ssid_def[] PROGMEM = "My_WiFi";
-static const char sta_pass_def[] PROGMEM = "";
+static const char sta_pass_def[] PROGMEM = "12345678";
 
 
 // ---------------------------------------------------- Common
@@ -127,11 +149,13 @@ uint8_t         debug_level  = 0; // 0 - отключен
 // ---------------------------------------------------- Constructors
 IPAddress IP_Addr;
 
+
+
+# if defined(ESP8266) || defined(ESP32) 
 File fsUploadFile;
+# endif
 
-conf_data_t conf_data;
-ram_data_t ram_data;
-
+ES e_srv;
 SF fsys;
 NF nsys;
 
