@@ -1,7 +1,4 @@
-//#include "ClickEncoder.h"
-
-//ClickEncoder *encoder;
-//unsigned timerEncoder = 0;
+unsigned timerEncoder = 0;
 
 
 long oldPosition  = -999;
@@ -13,12 +10,12 @@ void handleKey() {
 }
 
 void enc_setup() {
-  pinMode(D3, INPUT_PULLUP);
-  attachInterrupt(D3, handleKey, RISING);
+  pinMode(0, INPUT_PULLUP);
+  attachInterrupt(0, handleKey, RISING);
 }
 
 void enc_loop() {
-  long newPosition = myEnc.read();
+  long newPosition = myEnc.getValue();
 
   if (isButtonPressed && millis() - lastUpdateMillis > 50) // программное устранение дребезга:
   {
