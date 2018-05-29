@@ -70,7 +70,7 @@ void enc_loop() {
 
   if (newValue != 0)
   {
-    //    Serial.print("Encoder: ");Serial.println(newValue);
+    //    DBG_OUT_PORT.print("Encoder: ");DBG_OUT_PORT.println(newValue);
     // reset our accelerator
     if ((newValue > 0) && (oldValue < 0)) oldValue = 0;
     if ((newValue < 0) && (oldValue > 0)) oldValue = 0;
@@ -99,13 +99,13 @@ void enc_loop() {
   else {
     if (newValue != 0)
     {
-      //    Serial.print("Value: ");Serial.println(newValue);
-      //    Serial.print("Volume: ");Serial.println(volume+newValue+(oldValue*2));
+      //    DBG_OUT_PORT.print("Value: ");DBG_OUT_PORT.println(newValue);
+      //    DBG_OUT_PORT.print("Volume: ");DBG_OUT_PORT.println(volume+newValue+(oldValue*2));
       //     setVol(volume + newValue + (oldValue * 3));
     }
     if (newValue != 0)
     {
-      //    Serial.print("Value: ");Serial.println(newValue);
+      //    DBG_OUT_PORT.print("Value: ");DBG_OUT_PORT.println(newValue);
       //      stationNum(atoi(futurNum) + newValue);
     }
   }

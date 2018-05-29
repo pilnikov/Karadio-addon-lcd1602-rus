@@ -1,100 +1,181 @@
 
-void lcd_mov_str(String tape, uint8_t dline, unsigned long dutty)
+void radio_snd (String cmd, bool rcv)
 {
-  if (millis() - lcd_scroll_time[dline] > dutty)
-  {
-    lcd_scroll_time[dline] = millis();
-    cur_sym_pos[dline]++;
-  }
 
-  uint16_t y = tape.length();
-  if (cur_sym_pos[dline] > y + lcd_col) cur_sym_pos[dline] = 0; // End of scrolling
-
-  else
+  if (millis() - telnet_time > 30000)
   {
-    for (uint8_t p = 0; p < lcd_col; p++)
+    DBG_OUT_PORT.println("\n Start communication over telnet");
+    String out = "No connect with Radio";
+    if (web_cli)
     {
-      char buf[16];
-      int16_t i = cur_sym_pos[dline] + p - lcd_col;
+      WiFiClient client;
+      const int port = 23;
 
-      buf[p] = ' '; //Init buffer
+      if (!client.connect(conf_data.radio_addr, port))
+      {
+        client.stop();
+        out = "connection failed";
+      }
+      else
+      {
+        client.print(cmd + "\r\n");
+        if (rcv)
+        {
+          DBG_OUT_PORT.println("\n Start rcv");
+          char tmp = client.read();
+          unsigned long st_time = millis();
+          while (tmp != '\r' && millis() - st_time < 2000 )
+          {
+            tmp = client.read();
+            switch (tmp)
+            {
+              case '\n' :
+                if (_index == 0) break;
 
-      if (i >= 0 && i < y) buf[p] = tape[i]; //Write char in buffer
+              case '\r' :
+                line[_index] = 0; // end of string
+                _index = 0;
+                parse_k(line);
+                break;
+              case 0xFF :
+                break;
 
-      lcd.setCursor(p, dline);
-      lcd.print(buf[p]); //Draw char in lcd
+              default : // put the received char in line
+
+                if (tmp < 0xFF ) line[_index++] = tmp;
+                if (_index > BUFLEN - 1) // next line
+                {
+                  DBG_OUT_PORT.println(F("overflow"));
+                  line[_index] = 0;
+                  parse_k(line);
+                  _index = 0;
+                }
+            }
+            delay(2);
+          }
+        }
+        DBG_OUT_PORT.println("\n End rcv");
+        client.stop();
+        DBG_OUT_PORT.println("\n End communication over telnet");
+      }
     }
+    telnet_time = millis();
   }
 }
 
-
-
-String radio_snd (String cmd, bool rcv)
+////////////////////////////////////////
+// parse the karadio received line and do the job
+void parse_k(char* line)
 {
-  //  char radio_addr[17] = "192.168.1.39";
+  DBG_OUT_PORT.println("\n Start parsing");
+  char* ici;
+  removeUtf8((byte*)line);
 
-  DBG_OUT_PORT.println("\n Start communication over telnet");
-  String out = "No connect with Radio";
-  if (web_cli)
+  DBG_OUT_PORT.printf("\n Inline %s\n", line);
+
+  ////// Meta title
+  if ((ici = strstr(line, "META#: ")) != NULL)
   {
-    WiFiClient client;
-    const int port = 23;
-
-    if (!client.connect(conf_data.radio_addr, port))
+    cleaner(3);
+    strcpy(title, ici + 7);
+    writer(3);
+    DBG_OUT_PORT.printf("\n Title ...%s\n", title);
+    askDraw = true;
+  }
+  else
+    ////// ICY4 Description
+    if ((ici = strstr(line, "ICY4#: ")) != NULL)
     {
-      client.stop();
-      out = "connection failed";
+      cleaner(2);
+      strcpy(genre, ici + 7);
+      writer(2);
+      DBG_OUT_PORT.printf("\n Genree ...%s\n", genre);
+      askDraw = true;
     }
     else
-    {
-      DBG_OUT_PORT.println("\n Start snd");
-      client.print(cmd + "\r\n");
-      DBG_OUT_PORT.println("\n End snd");
-      DBG_OUT_PORT.println("\n Start rcv");
-      if (rcv)   out = client.readStringUntil('\r');
-      DBG_OUT_PORT.println("\n End rcv");
-      client.stop();
-    }
-  }
-  DBG_OUT_PORT.println("\n End communication over telnet");
-  return out;
-}
-
-void parse()
-{
-  str = fsys.lcd_rus(radio_snd("cli.info", true));
-  str.trim();
-
-  removeUtf8(str);
-  parser1(str);
-}
-
-void removeUtf8(String characters)
-{
-  int _index = 0;
-  while (characters[_index])
-  {
-    if ((characters[_index] >= 0xc2) && (characters[_index] <= 0xc3)) // only 0 to FF ascii char
-    {
-      //      Serial.println((characters[_index]));
-      characters[_index + 1] = ((characters[_index] << 6) & 0xFF) | (characters[_index + 1] & 0x3F);
-      int sind = _index + 1;
-      while (characters[sind]) {
-        characters[sind - 1] = characters[sind];
-        sind++;
+      ////// ICY0 station name
+      if ((ici = strstr(line, "ICY0#: ")) != NULL)
+      {
+        cleaner(1);
+        if (strlen(ici + 7) == 0) strcpy (station, nameset);
+        else strcpy(station, ici + 7);
+        writer(1);
+        DBG_OUT_PORT.printf("\n Station name ...%s\n", station);
+        askDraw = true;
       }
-      characters[sind - 1] = 0;
+      else
+        ////// STOPPED
+        if ((ici = strstr(line, "STOPPED")) != NULL)
+        {
+          cleaner(3);
+          digitalWrite(PIN_PLAYING, LOW);
+          strcpy(title, "STOPPED");
+          writer(3);
+          askDraw = true;
+        }
+        else
+          //////Nameset
+          if ((ici = strstr(line, "NAMESET#: ")) != NULL)
+          {
+            cleaner(0);
+            strcpy(nameset, ici + 9);
+            writer(0);
+            DBG_OUT_PORT.printf("\n Nameset ...%s\n", nameset);
+          }
+          else
+            //////Playing
+            if ((ici = strstr(line, "PLAYING#")) != NULL)
+            {
+              digitalWrite(PIN_PLAYING, HIGH);
+              if (strcmp(title, "STOPPED") == 0)
+              {
+                askDraw = true;
+              }
+            }
+            else
+              //////Volume
+              if ((ici = strstr(line, "VOL#:")) != NULL)
+              {
+                volume = atoi(ici + 6);
+                askDraw = true;;
+                DBG_OUT_PORT.printf("\n Volume ...%03d\n", volume);
+              }
+              else
+                //////Date Time  ##SYS.DATE#: 2017-04-12T21:07:59+01:00
+                if ((ici = strstr(line, "SYS.DATE#:")) != NULL)
+                {
+                  if (*(ici + 11) != '2') //// invalid date. try again later
+                  {
+                    askDraw = true;
+                    return;
+                  }
+                  char lstr[30];
+                  strcpy(lstr, ici + 11);
 
-    }
-    _index++;
-  }
+                  tmElements_t dt;
+                  breakTime(now(), dt); //Записываем в структуру dt (содержащую элементы час минута секунда год) текущее время в контроллере (в дурине)
+                  int year, month, day, hour, minute, second; //объявляем переменные под год месяц день недели и.т.д
+                  sscanf(lstr, "%04d-%02d-%02dT%02d:%02d:%02d", &(year), &(month), &(day), &(hour), &(minute), &(second)); //переносим (разбираем) строчку с датой на отдельные кусочки (день месяц год и.т.д)
+                  dt.Year = year - 1970; dt.Month = month; dt.Day = day; //заменяем кусочки структуры dt значениями из нашей принятой и разобранной строки с датой и временем
+                  dt.Hour = hour; dt.Minute = minute; dt.Second = second;
+                  setTime(makeTime(dt)); //записываем в timestamp(штамп/оттиск времени в формате UNIX time (количество секунд с 1970 года) значение времени сформированное в структуре dt
+                  syncTime = true;
+                  DBG_OUT_PORT.printf("\n Current time is %02d:%02d:%02d  %02d-%02d-%04d\n", hour, minute, second, day, month, year);
+                }
+  cleaner(4);
+  DBG_OUT_PORT.println("\n End parsing");
 }
 
 void fs_setup()
 {
-  DBG_OUT_PORT.print("\n");
+  bool isFSMounted = SPIFFS.begin();
+  if (!isFSMounted)
+  {
+    DBG_OUT_PORT.println("\n Wait for FS Formatted ...");
+    SPIFFS.format();
+  }
 
-  if (!SPIFFS.begin())     DBG_OUT_PORT.println("Failed to mount file system");
+  if (!SPIFFS.begin()) DBG_OUT_PORT.println("Failed to mount file system");
   else
   {
     Dir dir = SPIFFS.openDir("/");
@@ -108,51 +189,106 @@ void fs_setup()
   }
 }
 
+
+////////////////////////////////////////
+void removeUtf8(byte *characters)
+{
+  int index = 0;
+  while (characters[index])
+  {
+    if ((characters[index] >= 0xc2) && (characters[index] <= 0xc3)) // only 0 to FF ascii char
+    {
+      //      DBG_OUT_PORT.println((characters[index]));
+      characters[index + 1] = ((characters[index] << 6) & 0xFF) | (characters[index + 1] & 0x3F);
+      int sind = index + 1;
+      while (characters[sind]) {
+        characters[sind - 1] = characters[sind];
+        sind++;
+      }
+      characters[sind - 1] = 0;
+
+    }
+    index++;
+  }
+}
+
+////////////////////////////////////////
+void askTime()
+{
+  if (itAskTime) // time to ntp. Don't do that in interrupt.
+  {
+    radio_snd("sys.date", true);
+    itAskTime = false;
+  }
+}
+
 void wifi_conn( byte par, byte sta, byte disp)
 {
-  if (par < 3)
+  switch (disp)
   {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-  }
-  if ( par == 1) lcd.print(fsys.lcd_rus( "Подключаемся к" ));
+    case 0:
+      if (par < 3)
+      {
+        lcd -> clear();
+        lcd -> setCursor(0, 0);
+      }
+      if ( par == 1) lcd -> print(fsys.lcd_rus( "Подключаемся к" ));
 
-  if ( par == 2) lcd.print(fsys.lcd_rus( "Создаем" ));
+      if ( par == 2) lcd -> print(fsys.lcd_rus( "Создаем" ));
 
-  if (par < 3) lcd.setCursor(0, 1);
+      if (par < 3) lcd -> setCursor(0, 1);
 
-  if ( par == 1) lcd.print( conf_data.sta_ssid );
+      if ( par == 1) lcd -> print( conf_data.sta_ssid );
 
-  if ( par == 2) lcd.print(fsys.lcd_rus( "точку доступа" ));
+      if ( par == 2) lcd -> print(fsys.lcd_rus( "точку доступа" ));
 
-  if ( par == 3)
-  {
-    lcd.setCursor(15, 1);
-    lcd.print(sta);
-  }
+      if ( par == 3)
+      {
+        lcd -> setCursor(15, 1);
+        lcd -> print(sta);
+      }
 
-  if (par == 4 || par == 5)
-  {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print( "IP: ");
-    lcd.print(IP_Addr[3]);
-    sta_msg(disp, 0, 1, true, 2000);
-  }
+      if (par == 4 || par == 5)
+      {
+        lcd -> clear();
+        lcd -> setCursor(0, 0);
+        lcd -> print( "IP: ");
+        lcd -> print(IP_Addr[3]);
+        sta_msg(disp, 0, 1, true, 2000);
+      }
 
-  if (par == 6)
-  {
-    lcd.clear();
-    sta_msg(disp, 0, 1, false, 2000);
+      if (par == 6)
+      {
+        lcd -> clear();
+        sta_msg(disp, 0, 1, false, 2000);
+      }
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+    default:
+      break;
   }
 }
 
 void sta_msg(byte disp, uint8_t _row, uint8_t _colum, bool sta, uint16_t _delay)
 {
-  lcd.setCursor(_row, _colum);
-  if (sta) lcd.print(fsys.lcd_rus("  Успешно!  "));
-  else     lcd.print(fsys.lcd_rus("  Косяк!   "));
+  switch (disp)
+  {
+    case 0:
+      lcd -> setCursor(_row, _colum);
+      if (sta) lcd -> print(fsys.lcd_rus("  Успешно!  "));
+      else     lcd -> print(fsys.lcd_rus("  Косяк!   "));
 
-  delay(_delay);
-  lcd.clear();
+      delay(_delay);
+      lcd -> clear();
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+    default:
+      break;
+  }
 }

@@ -6,8 +6,8 @@ conf_data_t loadConfig()
 
   if (!configFile)
   {
-    DBG_OUT_PORT.println("Config file not found, true create new one");
-    initConfig();
+    DBG_OUT_PORT.println("Config file not found, load default setting");
+    data = defaultConfig();
   }
   else
   {
@@ -15,9 +15,8 @@ conf_data_t loadConfig()
 
     if (size > 500 || size < 5)
     {
-      DBG_OUT_PORT.println("Config file size is wrong true create new one");
-      configFile.close();
-      initConfig();
+      DBG_OUT_PORT.println("Config file size is wrong, load default setting");
+      data = defaultConfig();
     }
     else
     {
@@ -35,27 +34,23 @@ conf_data_t loadConfig()
       if (!json.success()) DBG_OUT_PORT.println("Failed to parse config file");
       else
       {
-        strncpy(data.sta_ssid,  " ", 33);
-        strncpy(data.sta_pass,  " ", 33);
-        strncpy(data.ap_ssid,   " ", 17);
-        strncpy(data.ap_pass ,  " ", 17);
-        strncpy(data.radio_addr, " ", 17);
-
-        strncpy(data.sta_ssid,  json["sta_ssid"],  33);
-        strncpy(data.sta_pass,  json["sta_pass"],  33);
-        strncpy(data.ap_ssid,   json["ap_ssid"],   17);
-        strncpy(data.ap_pass,   json["ap_pass"],   17);
+        strncpy(data.sta_ssid,   json["sta_ssid"],   33);
+        strncpy(data.sta_pass,   json["sta_pass"],   33);
+        strncpy(data.ap_ssid,    json["ap_ssid"],    17);
+        strncpy(data.ap_pass,    json["ap_pass"],    17);
         strncpy(data.radio_addr, json["radio_addr"], 17);
 
         data.type_disp        = json["type_disp"];
         configFile.close();
+
+        strncpy(oip, data.radio_addr, 17);
       }
     }
   }
   return data;
 }
 
-bool saveConfig(conf_data_t data)
+void saveConfig(conf_data_t data)
 {
   if (debug_level == 3) DBG_OUT_PORT.println( "Start saving conf_data to config.json");
 
@@ -73,43 +68,46 @@ bool saveConfig(conf_data_t data)
 
   File configFile = SPIFFS.open("/config.json", "w");
 
-  if (!configFile) {
+  if (!configFile)
+  {
     DBG_OUT_PORT.println("Failed to open config file for writing");
-    return false;
+    return;
+  }
+  else
+  {
+    size_t size = configFile.size();
+
+    if (size > 500 || size < 5)
+    {
+      DBG_OUT_PORT.println("Config file size is wrong true create new one");
+      configFile.close();
+      SPIFFS.remove("/config.json");
+      configFile = SPIFFS.open("/config.json", "w");
+    }
   }
 
   json.printTo(configFile);
-  configFile.close();
-  return true;
-}
-
-bool initConfig()
-{
-  debug_level = 3 ;
-  if (debug_level == 3) DBG_OUT_PORT.println( "Start inital conf_data with config.json");
-
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-
-  json["sta_ssid"]            = "Radio_Pult";
-  json["sta_pass"]            = "12345678";
-  json["ap_ssid"]             = "Radio_Pult";
-  json["ap_pass"]             = "12345678";
-  json["radio_addr"]          = "192.168.1.40";
-  json["type_disp"]           = "0";
-
-  File configFile = SPIFFS.open("/config.json", "w");
-
-  if (!configFile) {
-    DBG_OUT_PORT.println("Failed to open config file for writing");
-    return false;
-  }
-
-  json.printTo(configFile);
-
   DBG_OUT_PORT.println( "End write buffer to file");
   configFile.close();
+  delay(1000);
   ESP.restart();
-  //return true;
+  //  return true;
+}
+
+conf_data_t defaultConfig()
+{
+  conf_data_t data;
+  if (debug_level == 3) DBG_OUT_PORT.println( "Start inital conf_data with config.json");
+
+  //  strncpy(data.sta_ssid,   "MyWiFi",       33);
+  //  strncpy(data.sta_pass,   "MyPass",       33);
+
+  strncpy(data.sta_ssid,   "Home",         33);
+  strncpy(data.sta_pass,   "44332221111",  33);
+  strncpy(data.ap_ssid,    "Radio_Pult",   17);
+  strncpy(data.ap_pass,    "12345678",     17);
+  strncpy(data.radio_addr, "192.168.1.33", 17);
+  data.type_disp        = 0;
+  return data;
 }
 

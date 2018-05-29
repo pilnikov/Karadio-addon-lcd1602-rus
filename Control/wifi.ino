@@ -5,7 +5,7 @@ bool sta_init()
   bool result = WiFi.getMode() == WIFI_STA;;
   if (!result)
   {
-    wifi_conn(1, 0, ram_data.type_disp); //сообщение на индикатор
+    wifi_conn(1, 0, conf_data.type_disp); //сообщение на индикатор
     WiFi.disconnect();
     WiFi.mode( WIFI_STA );
     while ( WiFi.getMode() != WIFI_STA );
@@ -28,7 +28,7 @@ bool sta_check()
     while (j < 6 && !result)
     {
       result = WiFi.status() == 3;
-      wifi_conn(3, WiFi.status(), ram_data.type_disp); //сообщение на индикатор
+      wifi_conn(3, WiFi.status(), conf_data.type_disp); //сообщение на индикатор
       if (!result)
       {
         delay(2000);
@@ -39,12 +39,12 @@ bool sta_check()
     if (result)
     {
       IP_Addr = WiFi.localIP();
-      wifi_conn(4, 0, ram_data.type_disp); //выдать радостную новость на индикатор
+      wifi_conn(4, 0, conf_data.type_disp); //выдать радостную новость на индикатор
       WiFi.setAutoConnect(true);
       WiFi.setAutoReconnect(true);
       serv_ms = millis();
     }
-    else wifi_conn(6, 0, ram_data.type_disp); //выдать нерадостную новость на индикатор
+    else wifi_conn(6, 0, conf_data.type_disp); //выдать нерадостную новость на индикатор
   }
   return result;
 }
@@ -57,7 +57,7 @@ bool ap_init()
   bool result = WiFi.getMode() == WIFI_AP;
   if (!result)
   {
-    wifi_conn(2, 0, ram_data.type_disp); //сообщение на индикатор
+    wifi_conn(2, 0, conf_data.type_disp); //сообщение на индикатор
 
     WiFi.disconnect();
     WiFi.mode( WIFI_AP );
@@ -68,10 +68,10 @@ bool ap_init()
     if  (WiFi.getMode() == WIFI_AP)
     {
       IP_Addr = WiFi.softAPIP();
-      wifi_conn(5, 0, ram_data.type_disp); //выдать радостную новость на индикатор
+      wifi_conn(5, 0, conf_data.type_disp); //выдать радостную новость на индикатор
       serv_ms = millis();
     }
-    else wifi_conn(6, 0, ram_data.type_disp); //выдать нерадостную новость на индикатор
+    else wifi_conn(6, 0, conf_data.type_disp); //выдать нерадостную новость на индикатор
 
     result = WiFi.getMode() == WIFI_AP;
     if (result && web_cli)  web_cli = false;
