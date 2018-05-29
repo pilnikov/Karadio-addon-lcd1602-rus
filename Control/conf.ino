@@ -99,11 +99,9 @@ conf_data_t defaultConfig()
   conf_data_t data;
   if (debug_level == 3) DBG_OUT_PORT.println( "Start inital conf_data with config.json");
 
-  //  strncpy(data.sta_ssid,   "MyWiFi",       33);
-  //  strncpy(data.sta_pass,   "MyPass",       33);
+  strncpy(data.sta_ssid,   "MyWiFi",       33);
+  strncpy(data.sta_pass,   "MyPass",       33);
 
-  strncpy(data.sta_ssid,   "Home",         33);
-  strncpy(data.sta_pass,   "44332221111",  33);
   strncpy(data.ap_ssid,    "Radio_Pult",   17);
   strncpy(data.ap_pass,    "12345678",     17);
   strncpy(data.radio_addr, "192.168.1.33", 17);
