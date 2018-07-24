@@ -42,20 +42,14 @@ void setup()
   //-------------------------------------------------------  Запускаем установку энкодера
   //enc_setup();
 
-  //-------------------------------------------------------- Запускаем сетевые сервисы
-  WiFi.disconnect();
-  WiFi.mode( WIFI_OFF );
-  /*
-     // To run, set your ESP8266 build to 160MHz, update the SSID info, and upload.
-     system_update_cpu_freq(SYS_CPU_160MHZ);
-     WiFiManager wifiManager;
-     wifiManager.autoConnect("Home");
-     web_cli = true;
-     DBG_OUT_PORT.println("connected...yeey :)");
-  */
+  //-------------------------------------------------------- Запускаем WiFi
 
   start_wifi();
+  
+  DBG_OUT_PORT.println("WiFi started");
 
+  //if You want to bilt in led is on after stat wifi - uncomment string below 
+  //if (web_cli || web_ap) digitalWrite(LED_BUILTIN, LOW);
 
   //------------------------------------------------------ Подключаем OTA, SSDP и MDNS
   nsys.OTA_init(conf_data.ap_ssid, conf_data.ap_pass);
@@ -80,8 +74,8 @@ void loop()
   switch (conf_data.type_disp)
   {
     case 0:
-      lcd_mov_str(fsys.lcd_rus(station), 0 , 290);
-      lcd_mov_str(fsys.lcd_rus(title), 1, 290);
+      lcd_mov_str(f_dsp.lcd_rus(station), 0 , 290);
+      lcd_mov_str(f_dsp.lcd_rus(title), 1, 290);
       break;
 
     case 1:

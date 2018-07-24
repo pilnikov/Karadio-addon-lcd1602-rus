@@ -232,15 +232,15 @@ void wifi_conn( byte par, byte sta, byte disp)
         lcd -> clear();
         lcd -> setCursor(0, 0);
       }
-      if ( par == 1) lcd -> print(fsys.lcd_rus( "Подключаемся к" ));
+      if ( par == 1) lcd -> print(f_dsp.lcd_rus( "Подключаемся к" ));
 
-      if ( par == 2) lcd -> print(fsys.lcd_rus( "Создаем" ));
+      if ( par == 2) lcd -> print(f_dsp.lcd_rus( "Создаем" ));
 
       if (par < 3) lcd -> setCursor(0, 1);
 
       if ( par == 1) lcd -> print( conf_data.sta_ssid );
 
-      if ( par == 2) lcd -> print(fsys.lcd_rus( "точку доступа" ));
+      if ( par == 2) lcd -> print(f_dsp.lcd_rus( "точку доступа" ));
 
       if ( par == 3)
       {
@@ -278,8 +278,8 @@ void sta_msg(byte disp, uint8_t _row, uint8_t _colum, bool sta, uint16_t _delay)
   {
     case 0:
       lcd -> setCursor(_row, _colum);
-      if (sta) lcd -> print(fsys.lcd_rus("  Успешно!  "));
-      else     lcd -> print(fsys.lcd_rus("  Косяк!   "));
+      if (sta) lcd -> print(f_dsp.lcd_rus("  Успешно!  "));
+      else     lcd -> print(f_dsp.lcd_rus("  Косяк!   "));
 
       delay(_delay);
       lcd -> clear();

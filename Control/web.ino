@@ -22,7 +22,8 @@ void web_setup()
   server.on("/edit", HTTP_DELETE, handleFileDelete);
   //first callback is called after the request has ended with all parsed arguments
   //second callback handles file uploads at that location
-  server.on("/edit", HTTP_POST, []() {
+  server.on("/edit", HTTP_POST, []()
+  {
     server.send(200, "text/plain", "");
   }, handleFileUpload);
 
@@ -32,8 +33,7 @@ void web_setup()
     if (!handleFileRead(server.uri()))
       server.send(404, "text/plain", "FileNotFound");
   });
-
-//-------------------------------------------------------------- http update
+  //-------------------------------------------------------------- http update
 
   httpUpdater.setup( &server);
   server.begin();
@@ -49,15 +49,6 @@ void start_serv()
   }
 }
 
-//-------------------------------------------------------------- Stop_serv
-void stop_serv()
-{
-  server.stop();
-  digitalWrite(LED_BUILTIN, HIGH); //Гасим светодиод
-  if (debug_level == 14) DBG_OUT_PORT.println( "Server stopped");
-  stop_wifi();
-}
-
 //-------------------------------------------------------------- cur_time_str
 String cur_time_str()
 {
@@ -70,8 +61,8 @@ String cur_time_str()
 //-------------------------------------------------------------- handlejWiFi
 void handlejSet()
 {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
+  DynamicJsonDocument jsonBuffer;
+  JsonObject json = jsonBuffer.to<JsonObject>();
 
   json ["apid"]   = conf_data.ap_ssid;
   json ["appas"]  = conf_data.ap_pass;
@@ -81,7 +72,7 @@ void handlejSet()
   json ["dtyp"] = conf_data.type_disp;;
 
   String st = String();
-  json.printTo(st);
+  if (serializeJson(jsonBuffer, st) == 0) DBG_OUT_PORT.println(F("Failed write json to string"));
 
   server.send(200, "text/json", st);
   st = String();
@@ -105,13 +96,13 @@ void handleSetting()
 //-------------------------------------------------------------- handlejAct
 void handlejAct()
 {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
+  DynamicJsonDocument jsonBuffer;
+  JsonObject json = jsonBuffer.to<JsonObject>();
 
   json ["tstr"] = cur_time_str();
 
   String st = String();
-  json.printTo(st);
+  if (serializeJson(jsonBuffer, st) == 0) DBG_OUT_PORT.println(F("Failed write json to string"));
 
   server.send(200, "text/json", st);
   st = String();
@@ -249,6 +240,15 @@ String getContentType(String filename)
   else if (filename.endsWith(".zip")) return "application/x-zip";
   else if (filename.endsWith(".gz")) return "application/x-gzip";
   return "text/plain";
+}
+
+//-------------------------------------------------------------- Stop_serv
+void stop_serv()
+{
+  server.stop();
+  digitalWrite(LED_BUILTIN, HIGH); //Гасим светодиод
+  if (debug_level == 14) DBG_OUT_PORT.println( "Server stopped");
+  stop_wifi();
 }
 
 # endif

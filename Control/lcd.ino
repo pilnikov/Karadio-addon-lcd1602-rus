@@ -8,9 +8,9 @@ void lcd_init()
 
   lcd -> clear();
   lcd -> setCursor(0, 0); // первая строка
-  lcd -> print(fsys.lcd_rus("Привет мир!"));
+  lcd -> print(f_dsp.lcd_rus("Привет мир!"));
   lcd -> setCursor(0, 1); // вторая строка
-  lcd -> print(fsys.lcd_rus("Hello World!"));
+  lcd -> print(f_dsp.lcd_rus("Hello World!"));
   delay (1000);
 }
 

@@ -17,7 +17,7 @@
 #define FW_Ver 1.0 //16.05.17 added udp debug console
 
 // ------------------------------------------------------------- Include
-//#include "WiFiManager.h"                // https://github.com/tzapu/WiFiManager
+#include <WiFiManager.h>
 #include <LiquidCrystal_I2C.h>
 
 #include <U8g2lib.h>
@@ -57,6 +57,7 @@
 
 #include <Netwf.h>
 #include <Sysf2.h>
+#include <Fdsp.h>
 
 //#define DEBUG_UDP
 
@@ -137,8 +138,9 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 ClickEncoder myEnc(12, 13, 0);
 
-SF fsys;
+FD f_dsp;
 NF nsys;
+SF fsys;
 
 //----------------------------------------------------- SSD1306
 
@@ -186,8 +188,8 @@ const uint8_t lcd_row = 2;
 const uint8_t lcd_col = 16;
 
 String str = String();
-String cli_icy0 = fsys.lcd_rus("Название станции");
-String cli_meta = fsys.lcd_rus("Проигрывается сейчас");
+String cli_icy0 = f_dsp.lcd_rus("Название станции");
+String cli_meta = f_dsp.lcd_rus("Проигрывается сейчас");
 
 int cur_sym_pos[lcd_row] = {0, 0};
 unsigned long lcd_scroll_time[lcd_row] = {millis(), millis()};
